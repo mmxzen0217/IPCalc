@@ -21,6 +21,6 @@ what autoit version ip-calc can do:
 - calculate the size of a subnet 
 - check if an address is public or private
 - IPv4 
-+ provide a set of helper functions for IP address parsing so you can easily write your own macro
+- provide a set of helper functions for IP address parsing so you can easily write your own macro
 
 Thank Thomas Rohmer-Kretz.
