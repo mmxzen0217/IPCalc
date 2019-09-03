@@ -707,3 +707,30 @@ Func _IpRangeToCIDR($firstAddr,$lastAddr)
     $IpRangeToCIDR = $resultArray
 	Return $IpRangeToCIDR
 EndFunc
+
+;----------------------------------------------
+;   IpParseRoute
+;----------------------------------------------
+; this function is used by IpSubnetSortJoinArray to extract the subnet
+; and next hop in route
+; the supported formats are
+; 10.0.0.0 255.255.255.0 1.2.3.4
+; 10.0.0.0/24 1.2.3.4
+; the next hop can be any character sequence, and not only an IP
+Func _IpParseRoute($route, ByRef $nexthop)
+	$slash = StringInStr($route, "/")
+    $sp = StringInStr($route, " ")
+    If (($slash = 0) And ($sp > 0)) Then
+        $temp = StringMid($route, $sp + 1)
+        $sp = StringInStr($route, " ",0,1,$sp + 1)
+    EndIf
+    If ($sp = 0) Then
+        $nexthop = ""
+		Return $route
+    Else
+        $nexthop = StringMid($route, $sp + 1)
+		Return StringLeft($route, $sp - 1)
+    EndIf
+EndFunc
+
+
