@@ -643,3 +643,67 @@ Func _IpWithoutMask($ip)
 	EndIf
 	Return $result
 EndFunc
+
+;----------------------------------------------
+;   IpDiff
+;----------------------------------------------
+; difference between 2 IP addresses
+; example:
+;   IpDiff("192.168.1.7"; "192.168.1.1") returns 6
+Func _IpDiff($ip1,$ip2)
+	Local $IpDiff
+	Local $mult
+	$mult =1
+	$IpDiff=0
+	While(($ip1<>"") or $ip2<>"")
+		$IpDiff=$IpDiff+$mult*(_IpParse($ip1)-_IpParse($ip2))
+		$mult=$mult*256
+	WEnd
+	Return $IpDiff
+EndFunc
+
+;----------------------------------------------
+;   IpRangeToCIDR
+;----------------------------------------------
+; returns a network or a list of networks given the first and the
+; last address of an IP range
+; if this function is used in a array formula, it may return more
+; than one network
+; example:
+;   IpRangeToCIDR("10.0.0.1","10.0.0.254") returns 10.0.0.0/24
+;   IpRangeToCIDR("10.0.0.1","10.0.1.63") returns the array : 10.0.0.0/24 10.0.1.0/26
+; note:
+;   10.0.0.0 or 10.0.0.1 as the first address returns the same result
+;   10.0.0.254 or 10.0.0.255 (broadcast) as the last address returns the same result
+Func _IpRangeToCIDR($firstAddr,$lastAddr)
+    $firstAddr = _IpAnd($firstAddr, "255.255.255.254") ; set the last bit to zero
+    $lastAddr = _IpOr($lastAddr, "0.0.0.1") ; set the last bit to one
+	Local $list[0]
+	local $n=0
+	Local $IpRangeToCIDR
+	Do
+		$l=0
+		Do; find the largest network which first address is firstAddr and which last address is not higher than lastAddr
+          ; build a network of length l
+          ; if it does not comply the above conditions, try with a smaller network
+            $l = $l + 1
+            $net = $firstAddr & "/" & $l
+            $ip1 = _IpAnd($firstAddr, _IpMask($net)) ; first @ of this network
+            $ip2 = _IpOr($firstAddr, _IpWildMask($net)) ; last @ of this network
+            $net = $ip1 & "/" & $l ; rebuild the network with the first address
+            $diff = _IpDiff($ip2, $lastAddr) ; difference between the last @ of this network and the lastAddr we need to reach
+		Until Not(($l < 32) And (($ip1 <> $firstAddr) Or ($diff > 0)))
+		$n = $n + 1
+        ReDim $list[$n]
+        $list[$n-1] = $net
+        $firstAddr = _IpAdd($ip2, 1)
+    Until not($diff < 0) ; if we haven't reached the lastAddr, loop to build another network
+
+	Local $resultArray[0][1]
+    ReDim $resultArray[$n][1]
+	For $i = 0 To $n -1
+        $resultArray[$i][0] = $list[$i]
+    Next
+    $IpRangeToCIDR = $resultArray
+	Return $IpRangeToCIDR
+EndFunc
